@@ -18,6 +18,7 @@ from utils.utils import setup_seed, weight_init
 import torch.nn.functional as F
 
 DEBUG = True
+# DEBUG = False
 
 def get_arguments():
     parser = argparse.ArgumentParser()

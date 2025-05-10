@@ -18,7 +18,8 @@ from models.basic_model import AVClassifier, AClassifier, VClassifier, FClassifi
 from utils.utils import setup_seed, weight_init
 from loss.contrast_loss import SupConLoss
 
-DEBUG = True
+# DEBUG = True
+DEBUG = False
 
 def get_arguments():
     parser = argparse.ArgumentParser()
