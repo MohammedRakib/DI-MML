@@ -35,3 +35,6 @@
 `python main_CFT.py --dataset ModelNet --num_frame 1 --temperature 50 --train`
 `python main_CFT_stage2.py --dataset ModelNet --num_frame 1 --load_path path_model1 --load_path_other path_model2 --temperature 3 --train`
 
+
+CUDA_VISIBLE_DEVICES=1 python main_CFT.py --dataset AVMNIST --num_frame 1 --temperature 1 --train
+CUDA_VISIBLE_DEVICES=1 python main_CFT_stage2.py --dataset AVMNIST --num_frame 1 --load_path /home/rakib/DI-MML/ckpt/CFT-audio/model-AVMNIST-bsz16-lr0.001-align1-var0.1/epoch.pt --load_path_other /home/rakib/DI-MML/ckpt/CFT-visual/model-AVMNIST-bsz16-lr0.001-align1-var0.1/epoch.pt --temperature 1 --train

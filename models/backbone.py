@@ -83,6 +83,9 @@ class ResNet(nn.Module):
         elif modality == 'visual':
             self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
                                    bias=False)
+        elif modality == 'image':
+            self.conv1 = nn.Conv2d(1, self.inplanes, kernel_size=7, stride=2, padding=3,
+                                   bias=False)
         elif modality == 'flow':
             self.conv1 = nn.Conv2d(2, self.inplanes, kernel_size=7, stride=2, padding=3,
                                    bias=False)

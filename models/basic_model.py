@@ -15,6 +15,8 @@ class AClassifier(nn.Module):
             n_classes = 6
         elif args.dataset == 'AVE':
             n_classes = 28
+        elif args.dataset == 'AVMNIST':
+            n_classes = 10
         else:
             raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 
@@ -44,10 +46,15 @@ class VClassifier(nn.Module):
             n_classes = 101
         elif args.dataset == 'ModelNet':
             n_classes = 40
+        elif args.dataset == 'AVMNIST':
+            n_classes = 10
         else:
             raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 
-        self.net = resnet18(modality='visual')
+        if args.dataset == 'AVMNIST':
+            self.net = resnet18(modality='image')
+        else:
+            self.net = resnet18(modality='visual')
         self.classifier = nn.Linear(args.embed_dim, n_classes)
 
     def forward(self, visual, B):
@@ -73,6 +80,8 @@ class FClassifier(nn.Module):
             n_classes = 28
         elif args.dataset == 'UCF':
             n_classes = 101
+        elif args.dataset == 'AVMNIST':
+            n_classes = 10
         else:
             raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 
@@ -106,6 +115,8 @@ class VVClassifier(nn.Module):
             n_classes = 101
         elif args.dataset == 'ModelNet':
             n_classes = 40
+        elif args.dataset == 'AVMNIST':
+            n_classes = 10
         else:
             raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 
@@ -159,6 +170,8 @@ class FVClassifier(nn.Module):
             n_classes = 28
         elif args.dataset == 'UCF':
             n_classes = 101
+        elif args.dataset == 'AVMNIST':
+            n_classes = 10
         else:
             raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 
@@ -174,7 +187,10 @@ class FVClassifier(nn.Module):
             raise NotImplementedError('Incorrect fusion method: {}!'.format(fusion))
 
         self.flow_net = resnet18(modality='flow')
-        self.visual_net = resnet18(modality='visual')
+        if args.dataset == 'AVMNIST':
+            self.visual_net = resnet18(modality='image')
+        else:
+            self.visual_net = resnet18(modality='visual')
         
     def forward(self, flow, visual, B):
 
@@ -211,6 +227,8 @@ class AVClassifier(nn.Module):
             n_classes = 6
         elif args.dataset == 'AVE':
             n_classes = 28
+        elif args.dataset == 'AVMNIST':
+            n_classes = 10
         else:
             raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 
@@ -226,7 +244,10 @@ class AVClassifier(nn.Module):
             raise NotImplementedError('Incorrect fusion method: {}!'.format(fusion))
 
         self.audio_net = resnet18(modality='audio')
-        self.visual_net = resnet18(modality='visual')
+        if args.dataset == 'AVMNIST':
+            self.visual_net = resnet18(modality='image')
+        else:
+            self.visual_net = resnet18(modality='visual')
 
     def forward(self, audio, visual):
 
@@ -262,6 +283,8 @@ class AVClassifier_34(nn.Module):
             n_classes = 6
         elif args.dataset == 'AVE':
             n_classes = 28
+        elif args.dataset == 'AVMNIST':
+            n_classes = 10
         else:
             raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 
@@ -277,7 +300,10 @@ class AVClassifier_34(nn.Module):
             raise NotImplementedError('Incorrect fusion method: {}!'.format(fusion))
 
         self.audio_net = resnet34(modality='audio')
-        self.visual_net = resnet34(modality='visual')
+        if args.dataset == 'AVMNIST':
+            self.visual_net = resnet34(modality='image')
+        else:
+            self.visual_net = resnet34(modality='visual')
 
     def forward(self, audio, visual):
 
@@ -315,6 +341,8 @@ class AVClassifier_101(nn.Module):
             n_classes = 6
         elif args.dataset == 'AVE':
             n_classes = 28
+        elif args.dataset == 'AVMNIST':
+            n_classes = 10
         else:
             raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 
@@ -330,7 +358,10 @@ class AVClassifier_101(nn.Module):
             raise NotImplementedError('Incorrect fusion method: {}!'.format(fusion))
 
         self.audio_net = resnet101(modality='audio')
-        self.visual_net = resnet101(modality='visual')
+        if args.dataset == 'AVMNIST':
+            self.visual_net = resnet101(modality='image')
+        else:
+            self.visual_net = resnet101(modality='visual')
 
     def forward(self, audio, visual):
 
@@ -368,6 +399,8 @@ class CLClassifier(nn.Module):
             n_classes = 6
         elif args.dataset == 'AVE':
             n_classes = 28
+        elif args.dataset == 'AVMNIST':
+            n_classes = 10
         else:
             raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 

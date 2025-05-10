@@ -1,5 +1,6 @@
 import argparse
 import os
+from re import DEBUG
 
 import numpy as np
 import torch
@@ -12,16 +13,17 @@ from dataset.CramedDataset import CramedDataset
 from dataset.AVEDataset import AVEDataset
 from dataset.UCFDataset import UCF101
 from dataset.ModelNet40 import ModelNet40
+from dataset.AVMNISTDataset import AVMNIST
 from models.basic_model import AVClassifier, AClassifier, VClassifier, FClassifier, GrayClassifier, ColoredClassifier
 from utils.utils import setup_seed, weight_init
 from loss.contrast_loss import SupConLoss
 
-
+DEBUG = True
 
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', required=True, type=str,
-                        help='VGGSound, KineticSound, CREMAD, AVE, UCF')
+                        help='VGGSound, KineticSound, CREMAD, AVE, UCF, AVMNIST')
 
     parser.add_argument('--batch_size', default=16, type=int)
     parser.add_argument('--epochs', default=150, type=int)
@@ -79,7 +81,10 @@ def train_epoch(args, epoch, model1, model2, classifier, device,
         if args.dataset == 'UCF' or args.dataset == 'ModelNet':
             a,out1 = model1(spec.float(), B)
         else:
-            a,out1 = model1(spec.unsqueeze(1).float())
+            if args.dataset == 'AVMNIST':
+                a,out1 = model1(spec.float())
+            else:
+                a,out1 = model1(spec.unsqueeze(1).float())
         v,out2 = model2(image.float(), B)
         
         outa = classifier(a)
@@ -115,6 +120,8 @@ def valid(args, model1, model2, classifier, device, dataloader):
         n_classes = 101
     elif args.dataset == 'ModelNet':
         n_classes = 40
+    elif args.dataset == 'AVMNIST':
+        n_classes = 10
     else:
         raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 
@@ -136,7 +143,10 @@ def valid(args, model1, model2, classifier, device, dataloader):
             if args.dataset == 'UCF' or args.dataset == 'ModelNet':
                 a,out1 = model1(spec.float(), B)
             else:
-                a,out1 = model1(spec.unsqueeze(1).float())
+                if args.dataset == 'AVMNIST':
+                    a,out1 = model1(spec.float())
+                else:
+                    a,out1 = model1(spec.unsqueeze(1).float())
             v,out2 = model2(image.float(), B)
             
             prediction1 = softmax(out1)
@@ -160,6 +170,8 @@ def get_indices(args, model1, model2, device, n_sample, dataloader):
         n_classes = 101
     elif args.dataset == 'ModelNet':
         n_classes = 40
+    elif args.dataset == 'AVMNIST':
+        n_classes = 10
     else:
         raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
     with torch.no_grad():
@@ -181,7 +193,10 @@ def get_indices(args, model1, model2, device, n_sample, dataloader):
             if args.dataset == 'UCF' or args.dataset == 'ModelNet':
                 a,out1 = model1(spec.float(),B)
             else:
-                a,out1 = model1(spec.unsqueeze(1).float())
+                if args.dataset == 'AVMNIST':
+                    a,out1 = model1(spec.float())
+                else:
+                    a,out1 = model1(spec.unsqueeze(1).float())
             v,out2 = model2(image.float(),B)
 
             h_audio_features[label.item()] += a[0]
@@ -215,6 +230,9 @@ def main():
     args = get_arguments()
     args.use_cuda = torch.cuda.is_available() and not args.no_cuda
     print(args)
+    
+    if DEBUG:
+        args.epochs = 1
 
     setup_seed(args.random_seed)  
 
@@ -240,6 +258,8 @@ def main():
         n_classes = 101
     elif args.dataset == 'ModelNet':
         n_classes = 40
+    elif args.dataset == 'AVMNIST':
+        n_classes = 10
     else:
         raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
     
@@ -262,9 +282,17 @@ def main():
     elif args.dataset == 'ModelNet':
         train_dataset = ModelNet40(args, mode='train')
         test_dataset = ModelNet40(args, mode='test')
+    elif args.dataset == 'AVMNIST':
+        train_dataset = AVMNIST(mode='train')
+        test_dataset = AVMNIST( mode='test')
     else:
         raise NotImplementedError('Incorrect dataset name {}! '
                                   'Only support VGGSound, KineticSound and CREMA-D for now!'.format(args.dataset))
+
+    if DEBUG:
+        print("\n WARNING: Testing on a small dataset for student \n")
+        train_dataset = torch.utils.data.Subset(train_dataset, range(10))
+        test_dataset = torch.utils.data.Subset(test_dataset, range(10))
 
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=8, 
                                   shuffle=True, pin_memory=False)  # 计算机的内存充足的时候，可以设置pin_memory=True

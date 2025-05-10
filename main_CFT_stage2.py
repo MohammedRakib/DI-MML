@@ -11,17 +11,19 @@ from dataset.AVEDataset import AVEDataset
 from dataset.CramedDataset import CramedDataset
 from dataset.UCFDataset import UCF101
 from dataset.ModelNet40 import ModelNet40
+from dataset.AVMNISTDataset import AVMNIST
 from models.basic_model import AVClassifier, AClassifier, VClassifier, VVClassifier, FClassifier, FVClassifier
 from models.fusion_modules import SumFusion, ConcatFusion, FiLM, GatedFusion
 from utils.utils import setup_seed, weight_init
 import torch.nn.functional as F
 
+DEBUG = True
 
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--method', default='CE', type=str, help='CE, CL, CEwCL, combine_modality')
     parser.add_argument('--dataset', required=True, type=str,
-                        help='VGGSound, KineticSound, CREMAD, AVE, UCF')
+                        help='VGGSound, KineticSound, CREMAD, AVE, UCF, AVMNIST')
     parser.add_argument('--fusion_method', default='concat', type=str,
                         choices=['sum', 'concat', 'gated', 'film'])
     parser.add_argument('--batch_size', default=16, type=int)
@@ -72,6 +74,8 @@ def train_combine_classifier_epoch(args, epoch, audio_encoder, visual_encoder, c
         n_classes = 101
     elif args.dataset == 'ModelNet':
         n_classes = 40
+    elif args.dataset == 'AVMNIST':
+        n_classes = 10
     else:
         raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 
@@ -97,7 +101,10 @@ def train_combine_classifier_epoch(args, epoch, audio_encoder, visual_encoder, c
                 a_features = F.adaptive_avg_pool3d(a_features, 1)
                 a_features = torch.flatten(a_features, 1)
             else:
-                a_features = audio_encoder(spec.unsqueeze(1).float())
+                if args.dataset == 'AVMNIST':
+                    a_features = audio_encoder(spec.float())
+                else:
+                    a_features = audio_encoder(spec.unsqueeze(1).float())
                 a_features = F.adaptive_avg_pool2d(a_features, 1)
                 a_features = torch.flatten(a_features, 1)
 
@@ -139,6 +146,8 @@ def valid_combine_classifier(args, audio_encoder, visual_encoder, classifier,cla
         n_classes = 101
     elif args.dataset == 'ModelNet':
         n_classes = 40
+    elif args.dataset == 'AVMNIST':
+        n_classes = 10
     else:
         raise NotImplementedError('Incorrect dataset name {}'.format(args.dataset))
 
@@ -162,7 +171,10 @@ def valid_combine_classifier(args, audio_encoder, visual_encoder, classifier,cla
                 audio_features = F.adaptive_avg_pool3d(audio_features, 1)
                 audio_features = torch.flatten(audio_features, 1)
             else:
-                audio_features = audio_encoder(spec.unsqueeze(1).float())
+                if args.dataset == 'AVMNIST':
+                    audio_features = audio_encoder(spec.float())
+                else:
+                    audio_features = audio_encoder(spec.unsqueeze(1).float())
                 audio_features = F.adaptive_avg_pool2d(audio_features, 1)
                 audio_features = torch.flatten(audio_features, 1)
 
@@ -203,6 +215,9 @@ def main():
     args.use_cuda = torch.cuda.is_available() and not args.no_cuda
     print(args)
 
+    if DEBUG:
+        args.epochs = 1
+    
     setup_seed(args.random_seed)
 
     device = torch.device('cuda:' + str(args.gpu) if args.use_cuda else 'cpu')
@@ -233,6 +248,9 @@ def main():
     if args.dataset == 'CREMAD':
         train_dataset = CramedDataset(args, mode='train')
         test_dataset = CramedDataset(args, mode='test')
+    elif args.dataset == 'AVMNIST':
+        train_dataset = AVMNIST(mode='train')
+        test_dataset = AVMNIST(mode='test')
     elif args.dataset == 'AVE':
         train_dataset = AVEDataset(args, mode='train')
         test_dataset = AVEDataset(args, mode='test')
@@ -245,6 +263,11 @@ def main():
     else:
         raise NotImplementedError('Incorrect dataset name {}! '
                                   'Only support VGGSound, KineticSound and CREMA-D for now!'.format(args.dataset))
+        
+    if DEBUG:
+        print("\n WARNING: Testing on a small dataset for student \n")
+        train_dataset = torch.utils.data.Subset(train_dataset, range(10))
+        test_dataset = torch.utils.data.Subset(test_dataset, range(10))
 
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=8,
                                   shuffle=True, pin_memory=False)  # 计算机的内存充足的时候，可以设置pin_memory=True
